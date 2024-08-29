@@ -1,0 +1,33 @@
+# For now ... rely on latest rockylinux baseline OS
+FROM openapx/baseline-os:latest-rockylinux
+
+# -- add license file to root directory
+COPY LICENSE /LICENSE-rmultibin
+RUN  chmod u+r-wx,g+r-wx,o+r-wx /LICENSE-rmultibin
+
+
+# -- configuration files
+#    note: this is the input location for Shell scripts below
+
+COPY libs-rockylinux r_versions /opt/openapx/config/rmultibin/
+
+RUN find /opt/openapx/config/rmultibin -type f -exec chmod u+r-wx,g+r-wx,o-rwx {} \; && \
+    find /opt/openapx/config/rmultibin -type d -exec chmod u+rx-w,g+rx-w,o-rwx {} \;
+
+
+# -- scripted sequence
+#    1) enable CRB repositoru
+#    2) add binary library dependencies
+#    3) download, build, check and install R from source
+#    4+5) secure log directory
+#    6) clean-up
+
+COPY --chmod=755 scripts/rmultibin/build_r.sh /scripts/rmultibin/
+RUN dnf config-manager --enable crb && \
+    /opt/openapx/utilities/bin-libs.sh /opt/openapx/config/rmultibin/libs-rockylinux && \
+    /scripts/rmultibin/build_r.sh && \
+    find /logs/R/rmultibin -type f -exec chmod u+r-wx,g+r-wx,o-rwx {} \; && \
+    find /logs/R/rmultibin -type d -exec chmod u+rx-w,g+rx-w,o-rwx {} \; && \
+    rm -Rf /scripts
+
+

@@ -1,0 +1,31 @@
+# For now ... rely on latest ubuntu baseline OS
+FROM openapx/baseline-os:latest-ubuntu
+
+# -- add license file to root directory
+COPY LICENSE /LICENSE-rmultibin
+RUN  chmod u+r-wx,g+r-wx,o+r-wx /LICENSE-rmultibin
+
+
+# -- configuration files
+#    note: this is the input location for Shell scripts below
+
+COPY libs-ubuntu r_versions /opt/openapx/config/rmultibin/
+
+RUN find /opt/openapx/config/rmultibin -type f -exec chmod u+r-wx,g+r-wx,o-rwx {} \; && \
+    find /opt/openapx/config/rmultibin -type d -exec chmod u+rx-w,g+rx-w,o-rwx {} \;
+
+
+# -- scripted sequence
+#    1) add binary library dependencies
+#    2) download, build, check and install R from source
+#    3+4) secure log directory
+#    5) clean-up
+
+COPY --chmod=755 scripts/rmultibin/build_r.sh /scripts/rmultibin/
+RUN /opt/openapx/utilities/bin-libs.sh /opt/openapx/config/rmultibin/libs-ubuntu && \
+    /scripts/rmultibin/build_r.sh && \
+    find /logs/R/rmultibin -type f -exec chmod u+r-wx,g+r-wx,o-rwx {} \; && \
+    find /logs/R/rmultibin -type d -exec chmod u+rx-w,g+rx-w,o-rwx {} \; && \
+    rm -Rf /scripts
+
+
