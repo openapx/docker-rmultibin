@@ -14,6 +14,7 @@ on:
       - scripts/rmultibin/*
       - docker/rmultibin/Dockerfile-rmultibin-ubuntu
       - .github/workflows/build-docker-rmultibin-ubuntu.yml
+  workflow_dispatch:
 
 env:
   OS_TAG: "ubuntu"

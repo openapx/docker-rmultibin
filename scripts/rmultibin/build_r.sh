@@ -56,9 +56,11 @@ for BUILD_VER in $(grep "^[^#;]" /opt/openapx/config/rmultibin/r_versions | tr '
   # -- configure
   echo "   configure R ${BUILD_VER}"
 
+  R_INSTALL_PATH=/opt/R/${BUILD_VER}
+
   cd /builds/R-${BUILD_VER}
 
-  ../sources/R-${BUILD_VER}/configure --prefix=/opt/R/${BUILD_VER} \
+  ../sources/R-${BUILD_VER}/configure --prefix=${R_INSTALL_PATH} \
   	                              --enable-R-shlib \
 				      --with-blas \
 				      --with-lapack \
@@ -92,10 +94,16 @@ for BUILD_VER in $(grep "^[^#;]" /opt/openapx/config/rmultibin/r_versions | tr '
   gzip -9 /logs/R/rmultibin/builds/R-${BUILD_VER}-install.log
 
 
-  find /opt/R/${BUILD_VER} -type f -exec md5sum {} + > /logs/R/rmultibin/builds/R-${BUILD_VER}-install.md5
+  if [ ! -d ${R_INSTALL_PATH} ]; then
+    echo "buiald and install of R ${BUILD_VER} failed"
+    exit 1
+  fi
+
+
+  find ${R_INSTALL_PATH} -type f -exec md5sum {} + > /logs/R/rmultibin/builds/R-${BUILD_VER}-install.md5
   gzip -9 /logs/R/rmultibin/builds/R-${BUILD_VER}-install.md5
 
-  find /opt/R/${BUILD_VER} -type f -exec sha256sum {} + > /logs/R/rmultibin/builds/R-${BUILD_VER}-install.sha256
+  find ${R_INSTALL_PATH} -type f -exec sha256sum {} + > /logs/R/rmultibin/builds/R-${BUILD_VER}-install.sha256
   gzip -9 /logs/R/rmultibin/builds/R-${BUILD_VER}-install.sha256
 
 
@@ -104,24 +112,24 @@ for BUILD_VER in $(grep "^[^#;]" /opt/openapx/config/rmultibin/r_versions | tr '
   echo "-- initiate R ${BUILD_VER} site library"
 
   # identify lib directory .. sometime it is lib .. on others it is lib64 ... use ../R/library/base/DESCRIPTION (package) as trigger
-  RLIBX=$( find /opt/R/${BUILD_VER} -type f -name DESCRIPTION | grep "/R/library/base/DESCRIPTION$" | awk -F/ '{print $5}' )
+  RLIBX=$( find ${R_INSTALL_PATH} -type f -name DESCRIPTION | grep "/R/library/base/DESCRIPTION$" | awk -F/ '{print $5}' )
 
 
-  mkdir -p /opt/R/${BUILD_VER}/${RLIBX}/R/site-library
+  mkdir -p ${R_INSTALL_PATH}/${RLIBX}/R/site-library
 
 
   # -- secure the install location
   echo "-- secure R ${BUILD_VER} installation"
 
-  find /opt/R/${BUILD_VER} -type f -exec chmod u+r-wx,g+r-wx,o+r-wx {} \;
-  find /opt/R/${BUILD_VER} -type d -exec chmod u+rx-w,g+rx-w,o+rx-w {} \;
+  find ${R_INSTALL_PATH} -type f -exec chmod u+r-wx,g+r-wx,o+r-wx {} \;
+  find ${R_INSTALL_PATH} -type d -exec chmod u+rx-w,g+rx-w,o+rx-w {} \;
 
   # -- open up site-library for writing
-  chmod u+rwx,g+rwx,o+rx-w /opt/R/${BUILD_VER}/${RLIBX}/R/site-library
+  chmod u+rwx,g+rwx,o+rx-w ${R_INSTALL_PATH}/${RLIBX}/R/site-library
 
   # -- make R executable again 
-  find /opt/R/${BUILD_VER}/${RLIBX}/R/bin -type f -exec chmod u+rx-w,g+rx-w,o+rx-w {} \;
-  chmod u+rx-w,g+rx-w,o+rx-w /opt/R/${BUILD_VER}/bin/*
+  find ${R_INSTALL_PATH}/${RLIBX}/R/bin -type f -exec chmod u+rx-w,g+rx-w,o+rx-w {} \;
+  chmod u+rx-w,g+rx-w,o+rx-w ${R_INSTALL_PATH}/bin/*
 
   echo "-- R ${BUILD_VER} build and install completed"
 

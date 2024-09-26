@@ -14,6 +14,7 @@ on:
       - scripts/rmultibin/*
       - docker/rmultibin/Dockerfile-rmultibin-rockylinux
       - .github/workflows/build-docker-rmultibin-rockylinux.yml
+  workflow_dispatch:
 
 env:
   OS_TAG: "rockylinux"
